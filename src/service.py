@@ -16,6 +16,8 @@ class ImageClassifier:
 
         config = load_config_from_file(self.configFilePath)
 
+        print("Loaded config: ", self.configFilePath)
+
         self.perceptron = config['perceptron']
         self.cnn = config['cnn']
 
