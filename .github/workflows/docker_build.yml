@@ -1,0 +1,26 @@
+name: Docker Main Build CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: docker-login
+      env:
+        DOCKER_USER: ${{ secrets.DOCKER_USER_ANTASMES }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD_ANTASMES }}
+      run: |
+        docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+    - name: docker build python
+      run: |
+        docker build ./src -t antasmes/zr-aiservice:latest
+    - name: docker-push
+      run: |
+        docker push antasmes/zr-aiservice:latest
