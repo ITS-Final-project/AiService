@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY . ./
 
-RUN pip install numpy python-socketio asyncio flask[async] opencv-python-headless matplotlib imageio requests 
+RUN pip install numpy python-socketio asyncio flask[async] opencv-python-headless matplotlib imageio requests dotenv
 
 CMD ["python", "main.py"]

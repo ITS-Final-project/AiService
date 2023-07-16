@@ -1,16 +1,16 @@
 import cv2
 import numpy as np
 import base64
-from PIL import Image
 
 import service as service
 
 from flask import Flask, request, jsonify
 
+from configuration.serviceConfiguration import ServiceConfiguration 
+
 app = Flask(__name__)
 
-PYTHON_PORT = 3002
-PYTHON_HOST = 'localhost'
+PYTHON_HOST, PYTHON_PORT = ServiceConfiguration.load_config()
 
 imageClassifier = service.ImageClassifier()
 

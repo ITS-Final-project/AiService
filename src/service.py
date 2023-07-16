@@ -5,11 +5,14 @@ from network.cnn import CNN
 
 import numpy as np
 
+from configuration.nnConfiguration import NNConfiguration
+
 class ImageClassifier:
 
     def __init__(self):
+
         # config = load_config_from_file('./networks/NNTestLSigmoid4L7_500_500-8-93.67.npy')
-        self.configFilePath = './networks/NNTestLSigmoid4L11_500_500-13-93.5.npy'
+        self.configFilePath = NNConfiguration.load_config()
 
         config = load_config_from_file(self.configFilePath)
 
