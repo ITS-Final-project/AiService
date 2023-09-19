@@ -153,9 +153,6 @@ class CNN_Layer:
                 chunk = img[i-coord_shift:i-coord_shift+cr_f.shape[0],
                             j-coord_shift:j-coord_shift+cr_f.shape[0]]
 
-                # aproximate between 0 and 1
-                #chunk = chunk / 255
-
                 # adds a result of a sum and multiplication with the filter to a result array
                 result[i-1][j-1] = np.sum(chunk * cr_f)
 
