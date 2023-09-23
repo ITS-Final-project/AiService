@@ -1,3 +1,5 @@
+import sys
+import array
 from perceptron import Perceptron
 from activation import Activation
 from cnn import CNN, CNN_Layer
@@ -12,6 +14,73 @@ import os
 IMAGE_WIDTH = 28
 IMAGE_HEIGHT = 28
 
+LABELS_MAP = {
+    '0': 0,
+    '1': 1,
+    '2': 2,
+    '3': 3,
+    '4': 4,
+    '5': 5,
+    '6': 6,
+    '7': 7,
+    '8': 8,
+    '9': 9,
+    'A': 10,
+    'B': 11,
+    'C': 12,
+    'D': 13,
+    'E': 14,
+    'F': 15,
+    'G': 16,
+    'H': 17,
+    'J': 18,
+    'K': 19,
+    'L': 20,
+    'M': 21,
+    'N': 22,
+    'P': 23,
+    'R': 24,
+    'T': 25,
+    'U': 26,
+    'W': 27,
+    'X': 28
+}
+
+def load_letters(images_folder: str):
+    images = []
+    labels = []
+
+    print("Loading letters...")
+    for image_file in os.listdir(images_folder):
+        letter = image_file[0]
+
+        if letter == 'I' or letter == 'O':
+            continue
+
+        image = cv2.imread(images_folder + image_file, cv2.IMREAD_GRAYSCALE)
+        image = cv2.resize(image, (IMAGE_WIDTH, IMAGE_HEIGHT))
+
+        images.append(image)
+        labels.append(letter)
+
+    # Make array 
+    labels = array.array('u', labels)
+
+    data = {
+        "training": {
+            "images": images,
+            "labels": labels
+        },
+        "testing": {
+            "images": images,
+            "labels": labels
+        }
+    }
+
+    # print(data['training']['labels'])
+
+    return data
+
 def load_workdata():
     images = []
 
@@ -19,6 +88,9 @@ def load_workdata():
     mndata = MNISTLoader('./network/samples')
     images_training, labels_training = mndata.load_training()
     images_testing, labels_testing = mndata.load_testing()
+
+    labels_testing = array.array("u", [str(c) for c in labels_testing])
+    labels_training  = array.array("u", [str(c) for c in labels_training])
 
     data = {
         "training": {
@@ -30,6 +102,8 @@ def load_workdata():
             "labels": labels_testing
         }
     }
+
+    # print(data['training']['labels'])
 
     return data
 
@@ -52,7 +126,10 @@ def get_random_images(images, labels, count):
 def get_labels(numbered_labels):
     labels = []
     for label in numbered_labels:
-        labels.append(np.array([1 if i == label else 0 for i in range(10)]))
+        l_array = np.zeros(29)
+        l_array[LABELS_MAP[str(label)]] = 1
+        labels.append(l_array)
+        # labels.append(np.array([1 if i == label else 0 for i in range(10)]))
 
     return labels
     
@@ -122,13 +199,27 @@ def main():
 
         print("Loading data...")
         # load images and labels
+        letters_data = load_letters('./letters/')
         data = load_workdata()
+
+        # Adding letters data to overall data
+        letters_data['training']['images'] += data['training']['images']
+        letters_data['testing']['images'] += data['testing']['images']
+
+        letters_data['training']['labels'] += data['training']['labels']
+        letters_data['testing']['labels'] += data['testing']['labels']
+
+        # Have to add letter to the beginning
+        data['training']['images'] = letters_data['training']['images']
+        data['testing']['images'] = letters_data['testing']['images']
+
+        data['training']['labels'] = letters_data['training']['labels']
+        data['testing']['labels'] = letters_data['testing']['labels']
 
         print("Reshaping images...")
         # reshape images (from 1d to 2d) => (784,) to (28, 28)
         data['training']['images'] = reshape_images(data['training']['images'], IMAGE_WIDTH, IMAGE_HEIGHT)
         data['testing']['images'] = reshape_images(data['testing']['images'], IMAGE_WIDTH, IMAGE_HEIGHT)
-
 
         print("Fixing labels...")
         # get labels => 1 to [0, 1, 0, 0, 0, 0, 0, 0, 0, 0] (one hot encoding)
@@ -137,8 +228,10 @@ def main():
 
         print("Feature maps...")
         # put images through CNN => (28, 28) to (28, 28, 4) => Feture maps
-        training_input = cnn_model.prepare_data(data['training']['images'], 2000)
-        testing_input = cnn_model.prepare_data(data['testing']['images'], 2000)
+        training_input = cnn_model.prepare_data(data['training']['images'], 2000, 1)
+
+        print("Testing feature maps ...")
+        testing_input = cnn_model.prepare_data(data['testing']['images'], 2000, 1)
 
 
         print("Saving data...")
@@ -149,13 +242,13 @@ def main():
 
     print("Loading data (images)...")
     # load input values
-    testing_input = np.load("preparedTestingData_2L.npy", allow_pickle=True).item()['input']
-    training_input = np.load("preparedTrainingData_2L.npy", allow_pickle=True).item()['input']
+    testing_input = np.load("preparedTestingData.npy", allow_pickle=True).item()['input']
+    training_input = np.load("preparedTestingData.npy", allow_pickle=True).item()['input']
 
     print("Loading data (labels)...")
     # load lables
-    testing_lables = np.load("preparedTestingData_2L.npy", allow_pickle=True).item()['lables']
-    training_lables = np.load("preparedTrainingData_2L.npy", allow_pickle=True).item()['lables']
+    testing_lables = np.load("preparedTestingData.npy", allow_pickle=True).item()['lables']
+    training_lables = np.load("preparedTestingData.npy", allow_pickle=True).item()['lables']
 
 
     # Define perceptron
@@ -174,12 +267,14 @@ def main():
                                                     training_input.shape[1]//4,
                                                     training_input.shape[1]//8,
                                                     training_input.shape[1]//16],
-                                                    10)\
+                                                    29)\
                                                 .setLearningRate(0.001)\
                                                 .setBias()\
                                                 .setWeights()\
                                                 .build_me()
     
+    # A B C D E F G H J K L M N P R T U W = 18 + 10 = 28
+
     print("Saving config...")
     # Save model to file
     
@@ -215,7 +310,7 @@ def main():
             counter += 1
             max_accuracy = accuracy
             best_era = e
-            network_name = "NNTestLSigmoid4L"+str(counter)+"_500_500-" + str(e) + "-" + str(round(accuracy, 2))
+            network_name = "NNTestLSigmoidLetters4L"+str(counter)+"_500_500-" + str(e) + "-" + str(round(accuracy, 2))
             # np.save("./networks/" + network_name, np.array(perc.getWeights(), dtype=object))
 
             save_config_to_file("./networks/" + network_name, perc, cnn_model, accuracy)

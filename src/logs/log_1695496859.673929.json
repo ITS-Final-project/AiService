@@ -1,0 +1,1 @@
+[{"timestamp": 1695496859.672928, "level": "INFO", "message": "Logger opened", "origin": "Logger", "action": "Init"}, {"timestamp": 1695496859.673929, "level": "INFO", "message": "Server started", "origin": "AIService", "action": "Init", "port": "3002", "host": "localhost"}]

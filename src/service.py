@@ -7,6 +7,38 @@ import numpy as np
 
 from configuration.nnConfiguration import NNConfiguration
 
+LABELS_MAP = {
+    '0': 0,
+    '1': 1,
+    '2': 2,
+    '3': 3,
+    '4': 4,
+    '5': 5,
+    '6': 6,
+    '7': 7,
+    '8': 8,
+    '9': 9,
+    'A': 10,
+    'B': 11,
+    'C': 12,
+    'D': 13,
+    'E': 14,
+    'F': 15,
+    'G': 16,
+    'H': 17,
+    'J': 18,
+    'K': 19,
+    'L': 20,
+    'M': 21,
+    'N': 22,
+    'P': 23,
+    'R': 24,
+    'T': 25,
+    'U': 26,
+    'W': 27,
+    'X': 28
+}
+
 class ImageClassifier:
 
     def __init__(self):
@@ -22,9 +54,7 @@ class ImageClassifier:
         self.cnn = config['cnn']
 
     def classify(self, image):
-
-
-        print(image.shape)
+        
 
         # Get image
         class_input = self.cnn.prepare_data([image], 1)
@@ -33,7 +63,7 @@ class ImageClassifier:
         # Classify
         result = self.perceptron.FeedForwardFlex(class_input.T, vb=0)
 
-        return np.argmax(result[-1])
+        return list(LABELS_MAP.keys()) [list(LABELS_MAP.values()).index(np.argmax(result[-1]))]
 
     def train(self, image, label):
 
@@ -50,8 +80,8 @@ class ImageClassifier:
         result = self.perceptron.FeedForwardFlex(class_input.T, vb=0)
 
         print(result[-1])
-
-        return np.argmax(result[-1])
+        
+        return list(LABELS_MAP.keys()) [list(LABELS_MAP.values()).index(np.argmax(result[-1]))]
 
     def getStructure(self):
         layers = self.perceptron.getLayers()

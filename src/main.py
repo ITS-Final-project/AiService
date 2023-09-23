@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 import base64
@@ -22,36 +23,61 @@ imageClassifier = service.ImageClassifier()
 
 @app.route('/classificator/classify', methods=['POST'])
 def classify():
-    json_data = request.get_json()
+    try:
+        json_data = request.get_json()
 
-    url = json_data['data']['imgBase64']
-    trainMode = json_data['data']['trainMode']
-    label = json_data['data']['label']
+        url = json_data['data']['imgBase64']
+        trainMode = json_data['data']['trainMode']
+        label = json_data['data']['label']
 
-    print("Train mode: ", trainMode)
+        print("Train mode: ", trainMode)
 
-    b64 = url.split(',')[1]
-    
-    img = decodeBase64(b64)
+        b64 = url.split(',')[1]
+        
+        img = decodeBase64(b64)
 
-    # Shape image to 28x28
-    img = cv2.resize(img, (28, 28))
+        # Shape image to 28x28
+        img = cv2.resize(img, (28, 28))
 
-    # Make np array
-    img = np.array(img)
+        # Make np array
+        img = np.array(img)
 
-    # Make grayscale
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # Make grayscale
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    cv2.imwrite('preview.png', img)    
+        # saveImage(img, 'C')
 
-    if trainMode == 'true':
-        result = imageClassifier.train(img, label)
+        # Take white text and center it 
+
+        # Get image center
+        h, w = img.shape
+        center = (w // 2, h // 2)
+
+        # Get image center of mass
+        M = cv2.moments(img)
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+
+        # Get offset
+        dX = center[0] - cX
+        dY = center[1] - cY
+
+        # Shift image
+        M = np.float32([[1, 0, dX], [0, 1, dY]])
+        img = cv2.warpAffine(img, M, (w, h))
+
+        #saveImage(img, 'Y') # 
+        # I S O V Q Y Z
+        if trainMode == 'true':
+            result = imageClassifier.train(img, label)
+            return jsonify({'status': 'ok', 'result': str(result)}), 200
+
+        result = imageClassifier.classify(img)
+
         return jsonify({'status': 'ok', 'result': str(result)}), 200
-
-    result = imageClassifier.classify(img)
-
-    return jsonify({'status': 'ok', 'result': str(result)}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/py/service/check', methods=['GET'])
 def check():
@@ -101,6 +127,19 @@ def authenticate(token):
         return True
     except:
         return False
+    
+def saveImage(image, name):
+    # Check if image with that name exists and add number to it
+    i = 0
+    while True:
+        if os.path.isfile('./images/'+name + str(i) + '.png'):
+            i += 1
+        else:
+            break
+    
+    print ("Saving image: ", name + str(i) + '.png')
+    cv2.imwrite('./images/'+ name + str(i) + '.png', image)
+        
 
 if __name__ ==  '__main__':
     
